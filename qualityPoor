@@ -1,0 +1,30 @@
+qu <- quality
+str(qu)
+table(qu$PoorCare)
+#Since good care is more common than poor care, we would predict that all patients are receiving good care
+library(caTools)
+set.seed(88)
+split <- sample.split(qu$PoorCare,SplitRatio = 0.75)
+train <- subset(qu,split==T)
+test <- subset(qu,split==F)
+log <- glm(PoorCare~OfficeVisits+Narcotics,data = train, family = binomial)
+summary(log)
+#The preferred model is the one with the minimum AIC
+# let's make predictions on the training set
+pred <- predict(log,type = "response")
+summary(pred)
+#This will compute the average prediction for each of the true outcomes
+tapply(pred,train$PoorCare,mean)
+#So we see that for all of the true poor care cases, we predict an average probability of about
+#0.44 and all of the true good care cases, we predict an average probability of about 0.19
+#The threshold value
+table(train$PoorCare,pred>0.5)
+#ROC Curves
+library(ROCR)
+Rpred <- prediction(pred,train$PoorCare)
+Rperf <- performance(Rpred,"tpr","fpr")
+plot(Rperf,colorize=T,print.cutoffs.at=seq(0,1,0.1,),text.adj=c(-0.5,-0.5))
+predTest <- predict(log,type = "response", newdata = test)
+ROpredTest <- prediction(predTest,test$PoorCare)
+Rperf <- performance(ROpredTest,"tpr","fpr")
+auc <- as.numeric(performance(ROpredTest,"auc")@y.values)
