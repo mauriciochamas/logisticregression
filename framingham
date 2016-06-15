@@ -1,0 +1,20 @@
+fra <- framingham
+str(fra)
+library(caTools)
+set.seed(1000)
+split <- sample.split(fra$TenYearCHD,SplitRatio = 0.65)
+train <- subset(fra,split==T)
+test <- subset(fra,split==F)
+lmod <- glm(TenYearCHD~.,data = fra,family = binomial)
+summary(lmod)
+predT <- predict(lmod, type = "response", newdata = test)
+table(test$TenYearCHD,predT>0.5)
+# the accuracy of this model
+(1070+20)/(1070+5+178+20)
+#We need to compare this to the accuracy of a simple baseline method
+#The more frequent outcome in this case is 0
+(1070+5)/(1070+5+178+20)
+#So our model barely beats the baseline in terms of accuracy
+library(ROCR)
+Rpred <- prediction(predT,test$TenYearCHD)
+as.numeric(performance(Rpred,"auc")@y.values)
