@@ -1,0 +1,37 @@
+pol <- PollingData
+str(pol)
+table(pol$Year)
+summary(pol)
+#Multiple Imputation by Chained Equations
+library(mice)
+sim <- PollingData[c("Rasmussen","SurveyUSA","DiffCount","PropR")]
+summary(sim)
+set.seed(144)
+impued <- complete(mice(sim))
+summary(impued)
+pol$Rasmussen <- impued$Rasmussen
+pol$SurveyUSA <- impued$SurveyUSA
+summary(pol)
+train <- subset(pol,Year==2004|Year==2008)
+test <- subset(pol,Year==2012)
+#baseline
+table(train$Republican)
+table(sign(train$Rasmussen))
+table(train$Republican,sign(train$Rasmussen))
+#logistic regression model
+#multicollinearity 
+cor(train[c("Rasmussen","SurveyUSA","PropR","DiffCount","Republican")])
+mod1 <- glm(Republican~PropR,data = train,family="binomial")
+summary(mod1)
+pre1 <- predict(mod1,type = "response")
+table(train$Republican,pre1>=0.5)
+mod2 <- glm(Republican~SurveyUSA+DiffCount,data = train,family="binomial")
+pre2 <- predict(mod2,type = "response")
+table(train$Republican,pre2>=0.5)
+summary(mod2)
+table(test$Republican,sign(test$Rasmussen))
+table(train$Republican,sign(train$Rasmussen))
+pre <- predict(mod2,newdata = test,type = "response")
+table(test$Republican,pre>=0.5)
+#para encontrar en cual nos equivocamos: pre is greater than or equal to 0.5, and it was not a Republican
+subset(test,pre>=0.5&Republican==0)
