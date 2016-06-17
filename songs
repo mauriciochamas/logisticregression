@@ -1,0 +1,30 @@
+song <- songs
+table(song$year)
+table(song$artistname)
+mic <- song[song$artistname=="Michael Jackson",]
+mic2 <- mic[mic$artistname=="Michael Jackson"&mic$Top10=="1",]
+summary(mic2)
+table(song$timesignature)
+song$songtitle[which.max(song$tempo)]
+train <- subset(song,year<=2009)
+test <- subset(song,year==2010)
+log1 <- glm(Top10~.,data = train,family = "binomial")
+#demasiadas variable
+#crear vector con las variables que no se van a utilizar
+novar <- c("year", "songtitle", "artistname", "songID", "artistID")
+train <- train[,!(names(train)%in%novar)]
+test <- test[,!(names(test)%in%novar)]
+log1 <- glm(Top10~.,data = train,family = "binomial")
+summary(log1)
+cor(train[c("loudness","energy")])
+#will always work when you want to remove numeric variables
+log2 <- glm(Top10~.-loudness,data = train,family = "binomial")
+log3 <- glm(Top10~.-energy,data = train,family = "binomial")
+summary(log1)
+pre <- predict(log3,newdata=test,type = "response")
+table(test$Top10,pre>=0.45)
+(319+9)/(309+5+40+19)
+table(test$Top10)
+314/(314+59)
+19/(19+40)
+309/(309+5)
