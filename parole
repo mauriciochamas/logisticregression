@@ -1,0 +1,24 @@
+par <- parole
+summary(par)
+table(par$violator)
+str(par)
+par$state <- as.factor(par$state)
+par$violator <- as.factor(par$violator)
+summary(par)
+set.seed(144)
+library(caTools)
+split <- sample.split(parole$violator,SplitRatio = 0.7)
+train <- subset(par,split==T)
+test <- subset(par,split==F)
+mod <- glm(violator~.,data = train,family = "binomial")
+summary(mod)
+pred <- predict(mod, type = "response", newdata = test)
+summary(pred)
+table(test$violator,pred>0.5)
++12/23
+180/202
+table(test$violator)
+179/202
+library(ROCR)
+Rpred <- prediction(pred,test$violator)
+as.numeric(performance(Rpred,"auc")@y.values)
