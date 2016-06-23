@@ -1,0 +1,46 @@
+loa <- loans
+table(loa$not.fully.paid)
+1533/9578
+str(loa)
+summary(loa)
+mis <- subset(loans, is.na(log.annual.inc) | is.na(days.with.cr.line) | is.na(revol.util) | is.na(inq.last.6mths) | is.na(delinq.2yrs) | is.na(pub.rec))
+nrow(mis)
+table(mis$not.fully.paid)
+library(mice)
+set.seed(144)
+var.imp <- setdiff(names(loa),"not.fully.paid")
+imp <- complete(mice(loa[var.imp]))
+loa[var.imp] <- imp
+summary(loa)
+loi <- loans_imputed
+summary(loi)
+library(caTools)
+set.seed(144)
+split <- sample.split(loi$not.fully.paid,SplitRatio = 0.7)
+train <- subset(loi,split==T)
+test <- subset(loi,split==F)
+mod1 <- glm(not.fully.paid~.,data = train,family = "binomial")
+summary(mod1)
+test$pred <- predict(mod1,type ="response",newdata = test)
+table(test$not.fully.paid,test$pred>0.5)
+library(ROCR)
+Rpred <- prediction(test$pred,test$not.fully.paid)
+as.numeric(performance(Rpred,"auc")@y.values)
+#train the bivariate model
+bivar <- glm(not.fully.paid~int.rate,data = train,family = "binomial")
+summary(bivar)
+pred2 <- predict(bivar,type="response", newdata=test)
+summary(pred2)
+table(test$not.fully.paid,pred2>0.5)
+Rpred <- prediction(pred2,test$not.fully.paid)
+as.numeric(performance(Rpred,"auc")@y.values)
+test$profit <- exp(test$int.rate*3)-1
+test$profit[test$not.fully.paid==1]=-1
+summary(test$profit)
+high <- subset(test, int.rate >= 0.15)
+summary(high$profit)
+table(high$not.fully.paid)
+cut <- sort(high$pred,decreasing = F)[100]
+sel <- subset(high,pred<=cut)
+sum(sel$profit)
+table(sel$not.fully.paid)
